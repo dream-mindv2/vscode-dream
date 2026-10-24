@@ -12,6 +12,18 @@
     "Programming Languages"
   ],
   "main": "./extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In a workspace you have not trusted, Dream runs only a language server installed outside it: a server image or VM named by the workspace's own settings, or built inside it, is used once you trust it.",
+      "restrictedConfigurations": [
+        "dream.vm.path",
+        "dream.server.path",
+        "dream.packagePaths",
+        "dream.stdlib.path"
+      ]
+    }
+  },
   "activationEvents": [
     "onLanguage:dream"
   ],

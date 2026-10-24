@@ -44,7 +44,14 @@ function expandPath(s) {
 ///
 /// `lucid` is a compiled image rather than a native program, so this is looking
 /// for a file to hand the VM, not for something on PATH.
-function findServer(config, folders) {
+///
+/// An image found in the workspace is a program the workspace supplied, and
+/// running it on opening a folder would run whatever a cloned repository put
+/// at `build/lucid.dream`. So the workspace's own builds, and a checkout around
+/// it, are candidates only once the person has trusted the workspace; before
+/// that, VS Code also withholds the workspace's values for the paths below
+/// (`restrictedConfigurations` in package.json), and what runs is installed.
+function findServer(config, folders, trusted) {
   const configured = expandPath(config.get('server.path'));
   if (configured && fs.existsSync(configured)) return configured;
   const candidates = [];
@@ -52,7 +59,7 @@ function findServer(config, folders) {
   // A workspace that is (or contains a build of) the Dream checkout has the
   // freshest image -- the one the developer just built -- so it wins over the
   // installation.
-  for (const folder of folders || []) {
+  for (const folder of trusted ? folders || [] : []) {
     const root = folder.uri.fsPath;
     candidates.push(path.join(root, 'build', 'lucid.dream'));
     candidates.push(path.join(root, 'build-dream', 'bin', 'lucid.dream'));
@@ -113,10 +120,26 @@ function packagePaths(config, folders) {
 }
 
 function activate(context) {
+  context.subscriptions.push(
+    vscode.commands.registerCommand('dream.restartServer', async () => {
+      if (client) await client.restart();
+    }),
+    // Trusting the workspace is what lets its own build, and its settings,
+    // be used; the server running until then was an installed one.
+    vscode.workspace.onDidGrantWorkspaceTrust(async () => {
+      if (client) await client.stop();
+      client = undefined;
+      start();
+    })
+  );
+  start();
+}
+
+function start() {
   const config = vscode.workspace.getConfiguration('dream');
   const folders = vscode.workspace.workspaceFolders;
 
-  const server = findServer(config, folders);
+  const server = findServer(config, folders, vscode.workspace.isTrusted);
   if (!server) {
     vscode.window.showWarningMessage(
       'Dream: no language server image found. Build one with `just lucid`, ' +
@@ -167,12 +190,6 @@ function activate(context) {
       );
     }
   });
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('dream.restartServer', async () => {
-      if (client) await client.restart();
-    })
-  );
 
   client.start().catch((err) => {
     vscode.window.showErrorMessage(

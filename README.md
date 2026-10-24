@@ -48,6 +48,12 @@ takes the first `lucid.dream` it finds:
    finds it even when the editor was not started with `$MINDV2_PATH` set --
    as under the Nix flake's wrapped `dream`.
 
+**Step 2, and the workspace's own settings for the VM, server and package
+paths, need a trusted workspace.** An image or VM inside a folder you opened is
+a program that folder supplies, and a cloned repository could put one there. In
+a workspace you have not trusted, the extension runs only an installed server,
+with your user settings; trusting it restarts the server with the workspace's.
+
 `~` and `$VARS` are expanded in both paths. **Dream: Restart Language Server**
 picks up a rebuilt image. Rebuild it with `just lucid` after changing the
 language: `just` alone does not, and new syntax shows as a parse error until
