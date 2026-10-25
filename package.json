@@ -4,7 +4,7 @@
   "description": "Dream language support: syntax, diagnostics, go to definition, hover, outline and completion, from the Dream compiler itself.",
   "version": "0.1.0",
   "publisher": "dream",
-  "license": "SEE LICENSE IN ../../LICENSE",
+  "license": "(MIT OR Apache-2.0)",
   "engines": {
     "vscode": "^1.75.0"
   },
