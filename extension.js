@@ -119,7 +119,46 @@ function packagePaths(config, folders) {
   return [...new Set(roots)];
 }
 
+/// The toolchain `~/.mindv2/current` points at ($MINDV2_HOME), or undefined.
+function currentToolchain(home) {
+  try {
+    return path.basename(fs.readlinkSync(path.join(home, 'current')));
+  } catch (e) {
+    return undefined;
+  }
+}
+
+/// A server is an image of one toolchain's lucid, and `mind toolchain use`
+/// moves `current` to another: the running server would go on answering for
+/// the old language until restarted by hand. So the link is watched, and a
+/// change restarts the server, which then finds the new toolchain's lucid.
+function watchToolchain(context) {
+  const home = expandPath(process.env.MINDV2_HOME) || path.join(os.homedir(), '.mindv2');
+  let last = currentToolchain(home);
+  let timer;
+  try {
+    const watcher = fs.watch(home, (event, file) => {
+      if (file !== 'current') return;
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        const now = currentToolchain(home);
+        if (now === last) return;
+        last = now;
+        if (client) await client.stop();
+        client = undefined;
+        start();
+        vscode.window.showInformationMessage(`Dream: toolchain ${now || 'changed'}; the language server was restarted.`);
+      }, 500);
+    });
+    context.subscriptions.push({ dispose: () => watcher.close() });
+  } catch (e) {
+    // No toolchains installed: nothing to watch, and a checkout's own build
+    // is restarted by `Dream: Restart Language Server`.
+  }
+}
+
 function activate(context) {
+  watchToolchain(context);
   context.subscriptions.push(
     vscode.commands.registerCommand('dream.restartServer', async () => {
       if (client) await client.restart();
