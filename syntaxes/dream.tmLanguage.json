@@ -75,6 +75,11 @@
           "match": "\\\\(u\\{[0-9A-Fa-f]+\\}|.)"
         },
         {
+          "comment": "`$name` is `{name}`: a `$` and then a name. Any other `$` is text, and `\\$` is taken by the escape above.",
+          "name": "variable.other.interpolated.dream",
+          "match": "\\$[A-Za-z_][A-Za-z0-9_]*"
+        },
+        {
           "name": "meta.embedded.interpolation.dream",
           "begin": "\\{",
           "end": "\\}",
@@ -150,7 +155,7 @@
         {
           "comment": "The parser's list, exactly. `try!`, `comp!` and the rest carry their bang.",
           "name": "keyword.control.dream",
-          "match": "\\b(if|else|match|catch|when)\\b|\\b(try!|defer!|comp!)"
+          "match": "\\b(if|else|match|catch|when|in)\\b|\\b(try!|defer!|comp!)"
         },
         {
           "comment": "Contextual: `receive!` is syntax only before a brace, and a function may still be called that.",
